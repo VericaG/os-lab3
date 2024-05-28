@@ -1,0 +1,56 @@
+version: '3.8'
+services:
+  tcpserver:
+    build:
+      context: .
+      dockerfile: Dockerfile-tcp-Server
+    ports:
+      - "7000:7000"
+    environment:
+      - SERVER_PORT=7000
+    networks:
+      - server-client-private-network
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile-tcp-Client
+    environment:
+      - SERVER_NAME=tcpserver
+      - SERVER_PORT=7000
+    deploy:
+      replicas: 5
+    networks:
+      - server-client-private-network
+    depends_on:
+      tcpserver:
+        condition: service_healthy
+  udpserver:
+    build:
+      context: .
+      dockerfile: Dockerfile-udp-Server
+    ports:
+      - "4445:4445"
+    environment:
+      - SERVER_PORT=4445
+    networks:
+      - udpserver-udpclient-private-network
+  udpclient:
+    build:
+      context: .
+      dockerfile: Dockerfile-udp-Client
+    environment:
+      - SERVER_NAME=udpserver
+      - SERVER_PORT=4445
+    deploy:
+      replicas: 5
+    networks:
+      - udpserver-udpclient-private-network
+    depends_on:
+      udpserver:
+        condition: service_healthy
+
+networks:
+  udpserver-udpclient-private-network:
+    driver: bridge
+  server-client-private-network:
+    driver: bridge
